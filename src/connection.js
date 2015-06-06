@@ -1,5 +1,6 @@
 var tls = require('tls'),
 	util = require('util'),
+	domain = require('domain'),
 	EventEmitter = require('events').EventEmitter,
 	Message = require('./message');
 
@@ -70,15 +71,13 @@ Connection.prototype.connected = function() {
 		buffer = d[0];
 
 		for(var i=0; i<d[1].length; i++) {
-			this.log('stream-bots:receiving', {msg: d[1][i]});
+			this.log('debug', 'stream-bots:receiving', {msg: d[1][i]});
 			m = new Message(d[1][i], true);
 			if(m.type) {
 				this.emit('message', m);
 			}
 		}
 	}.bind(this));
-
-	this.client.on('end', this.disconnected.bind(this));
 }
 
 Connection.prototype.lookFor = function(type, cb) {
@@ -102,7 +101,7 @@ Connection.prototype.write = function(s) {
 	if(s[s.length-1] !== '\n') {
 		s += '\n';
 	}
-	this.log('stream-bots:writing', {msg: s});
+	this.log('debug', 'stream-bots:writing', {msg: s});
 	this.client.write(s);
 }
 
@@ -118,23 +117,43 @@ Connection.prototype.tryToConnect = function() {
 		return;
 	}
 
+	var self = this;
 	connecting = true;
-	this.log('stream-bots:tcp-attempt-to-connect', {
+	this.log('debug', 'stream-bots:tcp-attempt-to-connect', {
 		host: this.config.host,
 		port: this.config.port
 	});
 
-	this.client = tls.connect(this.config.port, this.config.host, function(err){
-		if(err) {
-			this.log('stream-bots:tcp-error', {err: err});
-			connecting = false;
-			this.disconnected();
-			setTimeout(this.tryToConnect.bind(this), this.options.retryInterval);
-			return;
-		}
-		this.log('stream-bots:tcp-connected');
+	var d = domain.create();
 
+	d.add(self);
+
+	d.on('error', function(err) {
+		self.log('stream-bots:failed-connection', 'will restablish in ' + self.options.retryInterval + 'ms');
 		connecting = false;
-		this.connected();
-	}.bind(this));
+		self.disconnected();
+		setTimeout(self.tryToConnect.bind(self), self.options.retryInterval);
+	});
+
+	d.run(function(){
+		self.client = tls.connect(self.config.port, self.config.host, function(err){
+			if(err) {
+				self.log('stream-bots:tcp-error', {err: err});
+				connecting = false;
+				self.disconnected();
+				setTimeout(self.tryToConnect.bind(self), self.options.retryInterval);
+				return;
+			}
+			self.log('stream-bots:tcp-connected');
+
+			connecting = false;
+			self.connected();
+
+			self.client.on('end', function() {
+				self.disconnected();
+				connecting = false;
+				setTimeout(self.tryToConnect.bind(self), self.options.retryInterval);
+			});
+		});
+	});
 }

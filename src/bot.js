@@ -6,8 +6,19 @@ var _ = require('lodash'),
 
 // @class Bot
 var Bot = module.exports = function(options) {
-	this.log = console.log;
 	this.options = _.defaults(options, Bot.defaultOptions);
+
+	// Set up logger
+	this.log = function() {
+		if(arguments[0] === 'debug') {
+			if(this.options.debug) {
+				console.log.apply(console, arguments);
+			}
+			return;
+		}
+		console.log.apply(console, arguments);
+	}.bind(this);
+
 	this.state = Bot.STATES.disconnected;
 
 	this.connection = new Connection({

@@ -1,6 +1,6 @@
 {
   "name": "stream-me-bot-express",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Streamme bot integration",
   "main": "index.js",
   "scripts": {
