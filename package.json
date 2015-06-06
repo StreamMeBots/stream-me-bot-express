@@ -1,0 +1,19 @@
+{
+  "name": "stream-me-bot-express",
+  "version": "1.0.1",
+  "description": "Streamme bot integration",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha tests"
+  },
+  "author": "Jordan <jordan@stream.me>",
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/npm/npm.git"
+  },
+  "dependencies": {
+    "lodash": "~3.9.3",
+    "mocha": "~2.2.5",
+    "request": "~2.57.0"
+  }
+}
