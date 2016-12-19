@@ -1,3 +1,7 @@
+# NOTICE
+
+This package is deprecated.  A new api is in the works.
+
 # <img src="https://static1.stream.me/web/active/images/robot-avatar.png" width=30px; style="display= inline-block" /> Stream Me Bot Express
 
 
